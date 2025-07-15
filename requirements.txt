@@ -1,0 +1,9 @@
+flask
+cohere
+pinecone-client
+pandas
+python-dotenv
+supabase
+scikit-learn
+numpy
+pyjwt
