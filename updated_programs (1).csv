@@ -1,0 +1,51 @@
+program_id,title,description,skills_required,category,start_date,end_date,cost
+P001,Introduction to ABAP Programming,Basics of SAP’s ABAP language for backend development.,ABAP,Development,2025-12-20,2026-01-02,2449
+P002,Advanced ABAP RAP Programming,Deep dive into RESTful ABAP Programming Model.,ABAP RAP,Development,2025-12-28,2026-01-09,3967
+P003,UI5 and Fiori for Developers,Build responsive SAP apps using UI5 and Fiori.,UI5 JavaScript,Frontend,2025-12-07,2025-12-17,1228
+P004,SAP Fiori UX Design,Design principles and UX workflows.,UX Design Thinking,UX,2025-12-13,2025-12-20,6246
+P005,SAP BW/4HANA Analytics,Data modeling and reporting with SAP BW/4HANA.,SAP BW HANA,Analytics,2025-12-11,2025-12-25,7474
+P006,Building SAP BTP Extensions,Develop scalable apps on SAP BTP.,BTP CAP,Cloud,2025-12-27,2026-01-11,2120
+P007,Mastering SAP CPI Integration,End-to-end integration using SAP CPI.,SAP CPI APIs,Integration,2025-12-08,2025-12-14,2121
+P008,S4HANA Finance Overview,Understand finance modules and migration paths.,S4HANA Finance,Functional,2025-12-31,2026-01-07,4412
+P009,MM Configuration and Best Practices,Set up SAP MM for procurement.,SAP MM Procurement,Functional,2025-12-09,2025-12-19,6996
+P010,SD Advanced Order Processing,Automate sales and delivery processes.,SAP SD Pricing,Functional,2025-12-17,2025-12-27,1298
+P011,SAP Ariba Strategic Sourcing,Procurement automation with Ariba.,Ariba Procurement,Procurement,2025-12-19,2025-12-27,5079
+P012,SuccessFactors EC Mastery,Manage employee data and workflows.,SuccessFactors EC,HR,2025-12-04,2025-12-11,3001
+P013,SAP Analytics Cloud for Business Users,Create dashboards using SAC.,Analytics Cloud BI,Analytics,2025-12-09,2025-12-23,5180
+P014,SAP GRC and Risk Management,Governance and compliance for enterprise systems.,GRC Security,Security,2025-12-10,2025-12-18,5264
+P015,SolMan for ALM & Testing,Manage lifecycle and testing with SolMan.,SolMan Testing,Project Management,2025-12-22,2025-12-28,4885
+P016,Building Mobile Apps with MDK,Offline-enabled apps using MDK.,SAP MDK Mobile SDK,Mobile,2025-12-20,2026-01-02,1529
+P017,Introduction to SAP HANA Modeling,Calculation views in HANA.,HANA Modeling SQLScript,Backend,2025-12-04,2025-12-10,7578
+P018,ABAP Debugging and Troubleshooting,Techniques for debugging ABAP.,ABAP Debugging,Development,2025-12-05,2025-12-14,2919
+P019,Fieldglass Integration Essentials,Integrate Fieldglass with SAP.,Fieldglass Integration,External Workforce,2025-12-28,2026-01-07,3662
+P020,Revenue Accounting with SAP RAR,Revenue recognition and contracts.,SAP RAR Revenue,Finance,2025-12-10,2025-12-25,1728
+P021,Workflow Automation in SAP,Implement workflows using BRF+.,Workflow BRF+,Automation,2025-12-07,2025-12-15,6415
+P022,Enterprise Security in SAP,User roles and authorizations.,IDM Authorizations,Security,2025-12-14,2025-12-24,1291
+P023,Creating Extensions with SAP CAP,Full-stack cloud apps using CDS.,CAP Node.js,Cloud,2025-12-17,2025-12-26,1321
+P024,SuccessFactors LMS,Administer LMS in SuccessFactors.,SuccessFactors LMS,HR,2025-12-30,2026-01-06,2683
+P025,Data Governance with MDG,Master data quality and compliance.,MDG Data Quality,Data Management,2025-12-07,2025-12-20,3519
+P026,Performance Tuning for ABAP & HANA,Improve backend performance.,ABAP HANA,Development,2025-12-07,2025-12-16,3139
+P027,UX Prototyping in SAP Fiori,UI design using SAP Build.,Fiori UX,UX,2025-12-29,2026-01-13,2587
+P028,Project Management using Activate,SAP Activate methodology.,Activate Project Management,Management,2025-12-21,2026-01-03,3430
+P029,Warehouse Management with SAP EWM,Extended warehouse processes.,EWM WM,Logistics,2025-12-04,2025-12-15,6890
+P030,Transportation Management in SAP TM,Logistics and shipment tracking.,SAP TM Logistics,Logistics,2025-12-24,2025-12-31,2834
+P031,Customizing Financial Reports,Cost and balance reports.,S4HANA CO,Finance,2025-12-28,2026-01-03,3510
+P032,Debugging OData Services,Fix OData APIs in Fiori.,OData Debugging,Integration,2025-12-10,2025-12-21,5475
+P033,DevOps for SAP Cloud,CI/CD automation in SAP.,DevOps BTP,DevOps,2025-12-07,2025-12-16,1852
+P034,Agile Delivery with SAP BTP,Agile practices for cloud projects.,Agile BTP,Project Management,2025-12-09,2025-12-14,2096
+P035,Real-Time Dashboards with SAC,Live dashboards with SAC.,SAC Visualization,Analytics,2025-12-29,2026-01-03,5659
+P036,Digital Transformation Strategy,Business transformation with SAP.,Strategy Digital Core,Management,2025-12-19,2025-12-28,5225
+P037,Building APIs on SAP BTP,Secure API management.,API Management BTP,Integration,2025-12-01,2025-12-16,3854
+P038,SuccessFactors EC Integrations,Integrate EC with other systems.,EC CPI,Integration,2025-12-16,2025-12-23,4068
+P039,Clean Core Architecture with RAP,Cloud-ready extensibility using RAP.,ABAP RAP CDS,Development,2025-12-15,2025-12-23,5988
+P040,Data Pipelines using SAP DI,Ingest and clean data.,SAP DI Python,Analytics,2025-12-12,2025-12-24,6100
+P041,Customer Journeys with SAP CRM,Map customer lifecycle.,SAP CRM Marketing,Customer Engagement,2025-12-03,2025-12-09,5509
+P042,Procurement Compliance Automation,Compliance-driven procurement.,Compliance Ariba,Procurement,2025-12-19,2025-12-27,7654
+P043,UX Design Thinking for SAP Apps,Empathy and ideation in UX.,Design Thinking UX,UX,2025-12-02,2025-12-11,2059
+P044,Introduction to SAP Build Apps,No-code development with SAP Build.,SAP Build Low-Code,Cloud,2025-12-15,2025-12-20,6674
+P045,Vendor and Contract Management,Supplier risk management.,Ariba Vendor Risk,Procurement,2025-12-26,2026-01-03,4765
+P046,Configuring Payroll in SAP HCM,Payroll schemas and time eval.,SAP Payroll HCM,HR,2025-12-30,2026-01-09,2175
+P047,Test Automation with CBTA,Component-based test automation.,CBTA Testing,Quality,2025-12-14,2025-12-21,1072
+P048,Application Lifecycle with Charm,Change and release management.,Charm SolMan,ALM,2025-12-17,2025-12-31,6527
+P049,Secure SAP Landscapes,Infrastructure and cloud security.,Security Infrastructure,Security,2025-12-09,2025-12-15,2770
+P050,Intro to SAP for Beginners,SAP navigation and ecosystem.,SAP Basics,General,2025-12-12,2025-12-18,7228

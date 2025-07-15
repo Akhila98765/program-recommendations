@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Program Recommendations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Edit Your Profile</h1>
+            <div class="user-info">
+                <a href="/" class="back-link">← Back to Dashboard</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </header>
+        
+        <form id="profileForm">
+            <input type="text" id="fullName" placeholder="Full Name" required>
+            <input type="text" id="role" placeholder="Your current role (e.g., Quality Engineer)" required>
+            
+            <select id="skillLevel" required>
+                <option value="" disabled>Select Skill Level</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+            
+            <input type="text" id="interests" placeholder="Learning interests (e.g., AI, Cloud, Testing)" required>
+            
+            <input type="text" id="preferredSkills" placeholder="Skills you want to learn (comma-separated)" required>
+            
+            <input type="number" id="maxBudget" placeholder="Maximum budget (₹)" min="0" step="1000" required>
+            
+            <select id="preferredMonth" required>
+                <option value="" disabled>Preferred Learning Month</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+            
+            <button type="submit">Update Profile</button>
+        </form>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // Load current profile data
+        window.addEventListener('load', async function() {
+            await loadProfile();
+        });
+        
+        async function loadProfile() {
+            try {
+                const response = await fetch('/api/profile');
+                const profile = await response.json();
+                
+                // Populate form fields
+                document.getElementById('fullName').value = profile.full_name || '';
+                document.getElementById('role').value = profile.role || '';
+                document.getElementById('skillLevel').value = profile.skill_level || '';
+                document.getElementById('interests').value = profile.interests || '';
+                document.getElementById('preferredSkills').value = profile.preferred_skills || '';
+                document.getElementById('maxBudget').value = profile.max_budget || '';
+                document.getElementById('preferredMonth').value = profile.preferred_month || '';
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('message').innerHTML = '<p style="color: red;">Error loading profile data</p>';
+            }
+        }
+        
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                full_name: document.getElementById('fullName').value,
+                role: document.getElementById('role').value,
+                skill_level: document.getElementById('skillLevel').value,
+                interests: document.getElementById('interests').value,
+                preferred_skills: document.getElementById('preferredSkills').value,
+                max_budget: parseInt(document.getElementById('maxBudget').value),
+                preferred_month: document.getElementById('preferredMonth').value
+            };
+            
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('message').innerHTML = '<p style="color: green;">Profile updated successfully!</p>';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    document.getElementById('message').innerHTML = `<p style="color: red;">${result.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('message').innerHTML = '<p style="color: red;">Update failed. Please try again.</p>';
+            }
+        });
+        
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                await fetch('/api/auth/logout', {method: 'POST'});
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

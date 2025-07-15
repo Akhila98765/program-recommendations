@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Learning Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Your Personalized Learning Programs</h1>
+            <div class="user-info">
+                <span id="userName"></span>
+                <a href="/profile" class="profile-link">Edit Profile</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </header>
+        
+        <div class="dashboard-content">
+            <div class="quick-search">
+                <h3>Find New Programs</h3>
+                <form id="quickSearchForm">
+                    <input type="text" id="searchInterest" placeholder="What do you want to learn today?" required>
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+            
+            <div class="recommendations-section">
+                <h3>Recommended for You</h3>
+                <div class="recommendations-grid" id="recommendations"></div>
+                <div class="show-more-container">
+                    <button class="show-more-btn" id="showMoreBtn" style="display: none;">Show More</button>
+                </div>
+            </div>
+            
+            <div class="registrations-section">
+                <h3>My Registered Programs</h3>
+                <div class="registrations-grid" id="myRegistrations"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userProfile = null;
+        let allRecommendations = [];
+        let displayedCount = 0;
+        const ITEMS_PER_PAGE = 12;
+        
+        // Load user profile and recommendations on page load
+        window.addEventListener('load', async function() {
+            await loadUserProfile();
+            await loadRecommendations();
+            await loadMyRegistrations();
+        });
+        
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('/api/profile');
+                userProfile = await response.json();
+                document.getElementById('userName').textContent = userProfile.full_name || 'User';
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+        
+        async function loadRecommendations() {
+            try {
+                const response = await fetch('/api/recommendations');
+                const data = await response.json();
+                allRecommendations = data.recommendations;
+                displayedCount = 0;
+                document.getElementById('recommendations').innerHTML = '';
+                displayRecommendations();
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                document.getElementById('recommendations').innerHTML = '<p>Error loading recommendations</p>';
+            }
+        }
+        
+        function displayRecommendations() {
+            const container = document.getElementById('recommendations');
+            const showMoreBtn = document.getElementById('showMoreBtn');
+            
+            if (allRecommendations && allRecommendations.length > 0) {
+                const endIndex = Math.min(displayedCount + ITEMS_PER_PAGE, allRecommendations.length);
+                const itemsToShow = allRecommendations.slice(displayedCount, endIndex);
+                
+                itemsToShow.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    
+                    // Add recommendation type badge
+                    let badgeHtml = '';
+                    let collaborativeInfoHtml = '';
+                    
+                    if (item.recommendation_type === 'collaborative') {
+                        badgeHtml = '<span class="collab-badge">👥 Collaborative</span>';
+                        if (item.collaborative_info) {
+                            collaborativeInfoHtml = `
+                                <div class="collaborative-info">
+                                    <p><strong>💡 ${item.collaborative_info.message}</strong></p>
+                                    <p><small>${item.collaborative_info.users_registered} users have registered for this program</small></p>
+                                </div>
+                            `;
+                        }
+                    } else if (item.recommendation_type === 'content_based') {
+                        badgeHtml = '<span class="content-badge">🎯 Personalized</span>';
+                    }
+                    
+                    div.innerHTML = `
+                        <div class="card-header">
+                            <h4>${item.title}</h4>
+                            ${badgeHtml}
+                        </div>
+                        <div class="card-content">
+                            <p><strong>Category:</strong> ${item.category}</p>
+                            <p><strong>Skills:</strong> ${item.skills_required}</p>
+                            <p><strong>Cost:</strong> ₹${item.cost}</p>
+                            <p><strong>Duration:</strong> ${item.start_date} to ${item.end_date}</p>
+                            <p><strong>Match Score:</strong> ${item.score}</p>
+                        </div>
+                        ${collaborativeInfoHtml}
+                        <div class="program-actions">
+                            ${item.is_registered ? 
+                                `<button class="unregister-btn" onclick="unregisterProgram('${item.program_id}')">Unregister</button>` :
+                                `<button class="register-btn" onclick="registerProgram('${item.program_id}', '${item.title}')">I have registered</button>`
+                            }
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+                
+                displayedCount = endIndex;
+                
+                // Show/hide "Show More" button
+                if (displayedCount < allRecommendations.length) {
+                    showMoreBtn.style.display = 'block';
+                } else {
+                    showMoreBtn.style.display = 'none';
+                }
+                
+            } else {
+                container.innerHTML = '<p>No recommendations found</p>';
+                showMoreBtn.style.display = 'none';
+            }
+        }
+        
+        // Show More button functionality
+        document.getElementById('showMoreBtn').addEventListener('click', function() {
+            displayRecommendations();
+        });
+        
+        async function loadMyRegistrations() {
+            try {
+                const response = await fetch('/api/my-registrations');
+                const data = await response.json();
+                displayMyRegistrations(data.registrations);
+            } catch (error) {
+                console.error('Error loading registrations:', error);
+                document.getElementById('myRegistrations').innerHTML = '<p>Error loading registrations</p>';
+            }
+        }
+        
+        function displayMyRegistrations(registrations) {
+            const container = document.getElementById('myRegistrations');
+            container.innerHTML = '';
+            
+            if (registrations && registrations.length > 0) {
+                registrations.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.innerHTML = `
+                        <div class="card-content">
+                            <h4>${item.program_title}</h4>
+                            <p><strong>Registered on:</strong> ${new Date(item.registered_at).toLocaleDateString()}</p>
+                        </div>
+                        <div class="program-actions">
+                            <button class="unregister-btn" onclick="unregisterProgram('${item.program_id}')">Unregister</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = '<p>No registered programs yet</p>';
+            }
+        }
+        
+        async function registerProgram(programId, programTitle) {
+            try {
+                const response = await fetch('/api/register-program', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        program_id: programId,
+                        program_title: programTitle
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Successfully registered for program!');
+                    await loadRecommendations();
+                    await loadMyRegistrations();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                alert('Registration failed. Please try again.');
+            }
+        }
+        
+        async function unregisterProgram(programId) {
+            if (!confirm('Are you sure you want to unregister from this program?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/unregister-program', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({program_id: programId})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Successfully unregistered from program!');
+                    await loadRecommendations();
+                    await loadMyRegistrations();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Unregistration error:', error);
+                alert('Unregistration failed. Please try again.');
+            }
+        }
+        
+        // Quick search
+        document.getElementById('quickSearchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const interest = document.getElementById('searchInterest').value;
+            
+            const searchData = {
+                interest: interest,
+                role: userProfile.role,
+                skill_level: userProfile.skill_level,
+                skills: userProfile.preferred_skills,
+                available_month: userProfile.preferred_month,
+                max_cost: userProfile.max_budget
+            };
+            
+            await performSearch(searchData);
+        });
+        
+        async function performSearch(searchData) {
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(searchData)
+                });
+                
+                const data = await response.json();
+                allRecommendations = data.recommendations;
+                displayedCount = 0;
+                document.getElementById('recommendations').innerHTML = '';
+                displayRecommendations();
+            } catch (error) {
+                console.error('Search error:', error);
+                document.getElementById('recommendations').innerHTML = '<p>Search failed. Please try again.</p>';
+            }
+        }
+        
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                await fetch('/api/auth/logout', {method: 'POST'});
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

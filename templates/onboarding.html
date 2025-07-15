@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Your Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Complete Your Profile</h1>
+        <p>Help us personalize your learning recommendations</p>
+        
+        <form id="onboardingForm">
+            <input type="text" id="role" placeholder="Your current role (e.g., Quality Engineer)" required>
+            
+            <select id="skillLevel" required>
+                <option value="" disabled selected>Select Skill Level</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+            
+            <input type="text" id="interests" placeholder="Learning interests (e.g., AI, Cloud, Testing)" required>
+            
+            <input type="text" id="preferredSkills" placeholder="Skills you want to learn (comma-separated)" required>
+            
+            <input type="number" id="maxBudget" placeholder="Maximum budget (₹)" min="0" step="1000" required>
+            
+            <select id="preferredMonth" required>
+                <option value="" disabled selected>Preferred Learning Month</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+            </select>
+            
+            <button type="submit">Complete Setup</button>
+        </form>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById('onboardingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                role: document.getElementById('role').value,
+                skill_level: document.getElementById('skillLevel').value,
+                interests: document.getElementById('interests').value,
+                preferred_skills: document.getElementById('preferredSkills').value,
+                max_budget: parseInt(document.getElementById('maxBudget').value),
+                preferred_month: document.getElementById('preferredMonth').value
+            };
+            
+            try {
+                const response = await fetch('/api/onboarding', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/';
+                } else {
+                    document.getElementById('message').innerHTML = `<p style="color: red;">${result.error}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('message').innerHTML = `<p style="color: red;">Setup failed. Please try again.</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

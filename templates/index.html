@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Personalized Program Recommendations</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Find the Best Learning Program for You</h1>
+
+    <form id="recommendForm">
+      <input type="text" id="interest" placeholder="Your learning goal (e.g. AI for Quality Engineers)" required>
+
+      <input type="text" id="role" placeholder="Your current role (e.g. Quality Engineer)" required>
+
+      <select id="skillLevel" required>
+        <option value="" disabled selected>Select Skill Level</option>
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Advanced">Advanced</option>
+      </select>
+
+      <input type="text" id="skills" placeholder="Skills you want to learn (comma-separated)" required>
+
+      <select id="availableMonth" required>
+        <option value="" disabled selected>Select Available Month</option>
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
+      </select>
+
+      <input type="number" id="maxCost" placeholder="Maximum budget (₹)" min="0" step="1000" required>
+
+      <button type="submit">Get Recommendations</button>
+    </form>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    document.getElementById("recommendForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const data = {
+        interest: document.getElementById("interest").value,
+        role: document.getElementById("role").value,
+        skill_level: document.getElementById("skillLevel").value,
+        skills: document.getElementById("skills").value,
+        available_month: document.getElementById("availableMonth").value,
+        max_cost: parseInt(document.getElementById("maxCost").value)
+      };
+
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "Loading...";
+
+      try {
+        const response = await fetch("/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const res = await response.json();
+        resultsDiv.innerHTML = "";
+
+        if (res.recommendations && res.recommendations.length > 0) {
+          res.recommendations.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "card";
+            div.innerHTML = `
+              <h3>${item.title}</h3>
+              <p><strong>Category:</strong> ${item.category}</p>
+              <p><strong>Skills:</strong> ${item.skills_required}</p>
+              <p><strong>Cost:</strong> ₹${item.cost}</p>
+              <p><strong>Duration:</strong> ${item.start_date} to ${item.end_date}</p>
+              <p><strong>Relevance Score:</strong> ${item.score}</p>
+            `;
+            resultsDiv.appendChild(div);
+          });
+        } else {
+          resultsDiv.innerHTML = "<p>No recommendations found matching your criteria.</p>";
+        }
+      } catch (error) {
+        resultsDiv.innerHTML = "<p>Error loading recommendations. Please try again.</p>";
+        console.error("Error:", error);
+      }
+    });
+  </script>
+</body>
+</html>
