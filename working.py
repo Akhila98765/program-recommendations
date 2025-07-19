@@ -99,8 +99,12 @@ def generate_content_based_recommendations(profile, user_registrations):
             if program_id in registered_program_ids:
                 continue
             
-            # Only include high-quality matches (score > 0.7) - removed date filtering
-            if match.score > 0.6:
+            # Only include high-quality matches (score > 0.7)
+            if match.score > 0.7 and is_program_available_in_month(
+                metadata.get("start_date"), 
+                metadata.get("end_date"), 
+                target_month_num
+            ):
                 recommendations.append({
                     "program_id": program_id,
                     "title": metadata.get("title"),
@@ -469,8 +473,12 @@ def recommend_programs():
             if program_id in registered_program_ids:
                 continue
             
-            # Only include high-quality matches (score > 0.6) - removed date filtering
-            if match.score > 0.6:
+            # Only include high-quality matches (score > 0.7)
+            if match.score > 0.6 and is_program_available_in_month(
+                metadata.get("start_date"), 
+                metadata.get("end_date"), 
+                target_month_num
+            ):
                 recommendations.append({
                     "program_id": program_id,
                     "title": metadata.get("title"),

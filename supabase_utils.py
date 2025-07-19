@@ -45,7 +45,6 @@ def create_user_profile(user_id: str, email: str, full_name: str):
         return response.data
     except Exception as e:
         print(f"Error creating user profile: {e}")
-        # Try to create with upsert to handle race conditions
         try:
             response = supabase_client.table("user_profiles").upsert({
                 "id": user_id,
@@ -188,7 +187,7 @@ def get_users_with_similar_profiles(current_user_id: str, limit: int = 10):
         print(f"❌ Error finding similar users: {e}")
         return []
 
-def get_collaborative_recommendations(user_id: str, limit: int = 10):
+def get_collaborative_recommendations(user_id: str, limit: int = 3):  # Changed from 5 to 3
     """Get program recommendations based on collaborative filtering"""
     try:
         print(f"\n=== COLLABORATIVE RECOMMENDATIONS FOR: {user_id} ===")
@@ -201,8 +200,8 @@ def get_collaborative_recommendations(user_id: str, limit: int = 10):
         for reg in current_registrations:
             print(f"   - {reg['program_title']} (ID: {reg['program_id']})")
         
-        # Get similar users
-        similar_users = get_users_with_similar_profiles(user_id, limit=20)
+        # Get similar users - reduce to top 10
+        similar_users = get_users_with_similar_profiles(user_id, limit=10)
         if not similar_users:
             print("❌ No similar users found!")
             return []
@@ -234,12 +233,15 @@ def get_collaborative_recommendations(user_id: str, limit: int = 10):
                 else:
                     print(f"     ⚠️  Already registered - skipping")
         
-        print(f"\n📊 COLLABORATIVE PROGRAM SCORES:")
-        for program_id, score in sorted(program_scores.items(), key=lambda x: x[1], reverse=True):
+        # Only include programs with high collaborative scores (score >= 5)
+        filtered_programs = {pid: score for pid, score in program_scores.items() if score >= 5}
+        
+        print(f"\n📊 HIGH-QUALITY COLLABORATIVE PROGRAM SCORES:")
+        for program_id, score in sorted(filtered_programs.items(), key=lambda x: x[1], reverse=True):
             print(f"   {program_titles[program_id]} (ID: {program_id}): {score}")
         
         # Sort by score and return top recommendations
-        sorted_programs = sorted(program_scores.items(), key=lambda x: x[1], reverse=True)
+        sorted_programs = sorted(filtered_programs.items(), key=lambda x: x[1], reverse=True)
         
         recommendations = []
         for program_id, score in sorted_programs[:limit]:

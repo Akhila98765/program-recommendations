@@ -8,78 +8,350 @@
 </head>
 <body>
     <div class="container">
-        <h1>Complete Your Profile</h1>
-        <p>Help us personalize your learning recommendations</p>
+        <div class="onboarding-header">
+            <h1>Complete Your Profile</h1>
+            <p id="stepDescription">Help us personalize your learning recommendations</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="step-indicator">
+                <span id="stepCounter">Step 1 of 6</span>
+            </div>
+        </div>
         
-        <form id="onboardingForm">
-            <input type="text" id="role" placeholder="Your current role (e.g., Quality Engineer)" required>
-            
-            <select id="skillLevel" required>
-                <option value="" disabled selected>Select Skill Level</option>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-            </select>
-            
-            <input type="text" id="interests" placeholder="Learning interests (e.g., AI, Cloud, Testing)" required>
-            
-            <input type="text" id="preferredSkills" placeholder="Skills you want to learn (comma-separated)" required>
-            
-            <input type="number" id="maxBudget" placeholder="Maximum budget (₹)" min="0" step="1000" required>
-            
-            <select id="preferredMonth" required>
-                <option value="" disabled selected>Preferred Learning Month</option>
-                <option value="January">January</option>
-                <option value="February">February</option>
-                <option value="March">March</option>
-                <option value="April">April</option>
-                <option value="May">May</option>
-                <option value="June">June</option>
-                <option value="July">July</option>
-                <option value="August">August</option>
-                <option value="September">September</option>
-                <option value="October">October</option>
-                <option value="November">November</option>
-                <option value="December">December</option>
-            </select>
-            
-            <button type="submit">Complete Setup</button>
-        </form>
+        <div class="onboarding-content">
+            <!-- Step 1: Current Role -->
+            <div class="step-card active" id="step1">
+                <div class="step-icon">👤</div>
+                <h2>What's your current role?</h2>
+                <p>This helps us understand your background and recommend relevant programs.</p>
+                <input type="text" id="role" placeholder="e.g., Quality Engineer, Software Developer, Data Analyst" required>
+                <div class="step-actions">
+                    <button type="button" class="next-btn" onclick="nextStep(1)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Skill Level -->
+            <div class="step-card" id="step2">
+                <div class="step-icon">📊</div>
+                <h2>What's your skill level?</h2>
+                <p>Choose the level that best describes your overall technical expertise.</p>
+                <div class="skill-level-options">
+                    <div class="skill-option" onclick="selectSkillLevel('Beginner')">
+                        <div class="skill-icon">🌱</div>
+                        <h3>Beginner</h3>
+                        <p>Just starting out or new to the field</p>
+                    </div>
+                    <div class="skill-option" onclick="selectSkillLevel('Intermediate')">
+                        <div class="skill-icon">🌿</div>
+                        <h3>Intermediate</h3>
+                        <p>Some experience and foundational knowledge</p>
+                    </div>
+                    <div class="skill-option" onclick="selectSkillLevel('Advanced')">
+                        <div class="skill-icon">🌳</div>
+                        <h3>Advanced</h3>
+                        <p>Experienced with deep technical knowledge</p>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="prev-btn" onclick="prevStep(2)">Previous</button>
+                    <button type="button" class="next-btn" onclick="nextStep(2)" disabled>Next</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Learning Interests -->
+            <div class="step-card" id="step3">
+                <div class="step-icon">🎯</div>
+                <h2>What are your learning interests?</h2>
+                <p>Tell us about the areas you're most excited to explore.</p>
+                <input type="text" id="interests" placeholder="e.g., AI, Cloud Computing, Testing, Data Science" required>
+                <div class="suggestions">
+                    <span class="suggestion-tag" onclick="addToInterests('Artificial Intelligence')">AI</span>
+                    <span class="suggestion-tag" onclick="addToInterests('Cloud Computing')">Cloud</span>
+                    <span class="suggestion-tag" onclick="addToInterests('Testing')">Testing</span>
+                    <span class="suggestion-tag" onclick="addToInterests('Data Science')">Data Science</span>
+                    <span class="suggestion-tag" onclick="addToInterests('Machine Learning')">ML</span>
+                    <span class="suggestion-tag" onclick="addToInterests('DevOps')">DevOps</span>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="prev-btn" onclick="prevStep(3)">Previous</button>
+                    <button type="button" class="next-btn" onclick="nextStep(3)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Preferred Skills -->
+            <div class="step-card" id="step4">
+                <div class="step-icon">🛠️</div>
+                <h2>What skills do you want to learn?</h2>
+                <p>List specific skills or technologies you want to master.</p>
+                <input type="text" id="preferredSkills" placeholder="e.g., Python, AWS, Selenium, TensorFlow" required>
+                <div class="suggestions">
+                    <span class="suggestion-tag" onclick="addToSkills('Python')">Python</span>
+                    <span class="suggestion-tag" onclick="addToSkills('AWS')">AWS</span>
+                    <span class="suggestion-tag" onclick="addToSkills('Selenium')">Selenium</span>
+                    <span class="suggestion-tag" onclick="addToSkills('Docker')">Docker</span>
+                    <span class="suggestion-tag" onclick="addToSkills('React')">React</span>
+                    <span class="suggestion-tag" onclick="addToSkills('TensorFlow')">TensorFlow</span>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="prev-btn" onclick="prevStep(4)">Previous</button>
+                    <button type="button" class="next-btn" onclick="nextStep(4)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Budget -->
+            <div class="step-card" id="step5">
+                <div class="step-icon">💰</div>
+                <h2>What's your learning budget?</h2>
+                <p>Set a maximum budget for courses and programs.</p>
+                <div class="budget-options">
+                    <div class="budget-option" onclick="selectBudget(5000)">
+                        <div class="budget-amount">₹5,000</div>
+                        <div class="budget-label">Budget-friendly</div>
+                    </div>
+                    <div class="budget-option" onclick="selectBudget(15000)">
+                        <div class="budget-amount">₹15,000</div>
+                        <div class="budget-label">Moderate</div>
+                    </div>
+                    <div class="budget-option" onclick="selectBudget(30000)">
+                        <div class="budget-amount">₹30,000</div>
+                        <div class="budget-label">Premium</div>
+                    </div>
+                    <div class="budget-option custom-budget">
+                        <input type="number" id="customBudget" placeholder="Custom amount" min="0" step="1000" onchange="selectBudget(this.value)">
+                        <div class="budget-label">Custom</div>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="prev-btn" onclick="prevStep(5)">Previous</button>
+                    <button type="button" class="next-btn" onclick="nextStep(5)" disabled>Next</button>
+                </div>
+            </div>
+
+            <!-- Step 6: Preferred Month -->
+            <div class="step-card" id="step6">
+                <div class="step-icon">📅</div>
+                <h2>When would you like to start learning?</h2>
+                <p>Choose your preferred month to begin your learning journey.</p>
+                <div class="month-grid">
+                    <div class="month-option" onclick="selectMonth('January')">Jan</div>
+                    <div class="month-option" onclick="selectMonth('February')">Feb</div>
+                    <div class="month-option" onclick="selectMonth('March')">Mar</div>
+                    <div class="month-option" onclick="selectMonth('April')">Apr</div>
+                    <div class="month-option" onclick="selectMonth('May')">May</div>
+                    <div class="month-option" onclick="selectMonth('June')">Jun</div>
+                    <div class="month-option" onclick="selectMonth('July')">Jul</div>
+                    <div class="month-option" onclick="selectMonth('August')">Aug</div>
+                    <div class="month-option" onclick="selectMonth('September')">Sep</div>
+                    <div class="month-option" onclick="selectMonth('October')">Oct</div>
+                    <div class="month-option" onclick="selectMonth('November')">Nov</div>
+                    <div class="month-option" onclick="selectMonth('December')">Dec</div>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="prev-btn" onclick="prevStep(6)">Previous</button>
+                    <button type="button" class="complete-btn" onclick="completeOnboarding()" disabled>Complete Setup</button>
+                </div>
+            </div>
+        </div>
         
         <div id="message"></div>
     </div>
 
     <script>
-        document.getElementById('onboardingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        let currentStep = 1;
+        const totalSteps = 6;
+        let formData = {};
+        
+        const stepDescriptions = {
+            1: "Help us understand your professional background",
+            2: "Let's assess your technical expertise level",
+            3: "What excites you most about learning?",
+            4: "Which specific skills would you like to develop?",
+            5: "Set a comfortable budget for your learning journey",
+            6: "When would you like to start your learning adventure?"
+        };
+
+        function updateProgress() {
+            const progressFill = document.getElementById('progressFill');
+            const stepCounter = document.getElementById('stepCounter');
+            const stepDescription = document.getElementById('stepDescription');
             
-            const data = {
-                role: document.getElementById('role').value,
-                skill_level: document.getElementById('skillLevel').value,
-                interests: document.getElementById('interests').value,
-                preferred_skills: document.getElementById('preferredSkills').value,
-                max_budget: parseInt(document.getElementById('maxBudget').value),
-                preferred_month: document.getElementById('preferredMonth').value
-            };
+            const progressPercent = (currentStep / totalSteps) * 100;
+            progressFill.style.width = progressPercent + '%';
+            stepCounter.textContent = `Step ${currentStep} of ${totalSteps}`;
+            stepDescription.textContent = stepDescriptions[currentStep];
+        }
+
+        function showStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Show current step
+            document.getElementById(`step${step}`).classList.add('active');
+            updateProgress();
+        }
+
+        function nextStep(step) {
+            if (validateStep(step)) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+
+        function prevStep(step) {
+            currentStep--;
+            showStep(currentStep);
+        }
+
+        function validateStep(step) {
+            switch(step) {
+                case 1:
+                    const role = document.getElementById('role').value.trim();
+                    if (!role) {
+                        alert('Please enter your current role');
+                        return false;
+                    }
+                    formData.role = role;
+                    return true;
+                    
+                case 2:
+                    if (!formData.skill_level) {
+                        alert('Please select your skill level');
+                        return false;
+                    }
+                    return true;
+                    
+                case 3:
+                    const interests = document.getElementById('interests').value.trim();
+                    if (!interests) {
+                        alert('Please enter your learning interests');
+                        return false;
+                    }
+                    formData.interests = interests;
+                    return true;
+                    
+                case 4:
+                    const skills = document.getElementById('preferredSkills').value.trim();
+                    if (!skills) {
+                        alert('Please enter skills you want to learn');
+                        return false;
+                    }
+                    formData.preferred_skills = skills;
+                    return true;
+                    
+                case 5:
+                    if (!formData.max_budget) {
+                        alert('Please select your budget');
+                        return false;
+                    }
+                    return true;
+                    
+                default:
+                    return true;
+            }
+        }
+
+        function selectSkillLevel(level) {
+            // Clear previous selections
+            document.querySelectorAll('.skill-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select current option
+            event.target.closest('.skill-option').classList.add('selected');
+            formData.skill_level = level;
+            
+            // Enable next button
+            document.querySelector('#step2 .next-btn').disabled = false;
+        }
+
+        function selectBudget(amount) {
+            // Clear previous selections
+            document.querySelectorAll('.budget-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select current option
+            event.target.closest('.budget-option').classList.add('selected');
+            formData.max_budget = parseInt(amount);
+            
+            // Enable next button
+            document.querySelector('#step5 .next-btn').disabled = false;
+        }
+
+        function selectMonth(month) {
+            // Clear previous selections
+            document.querySelectorAll('.month-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select current option
+            event.target.classList.add('selected');
+            formData.preferred_month = month;
+            
+            // Enable complete button
+            document.querySelector('.complete-btn').disabled = false;
+        }
+
+        function addToInterests(interest) {
+            const interestsInput = document.getElementById('interests');
+            const currentValue = interestsInput.value;
+            
+            if (currentValue) {
+                if (!currentValue.includes(interest)) {
+                    interestsInput.value = currentValue + ', ' + interest;
+                }
+            } else {
+                interestsInput.value = interest;
+            }
+        }
+
+        function addToSkills(skill) {
+            const skillsInput = document.getElementById('preferredSkills');
+            const currentValue = skillsInput.value;
+            
+            if (currentValue) {
+                if (!currentValue.includes(skill)) {
+                    skillsInput.value = currentValue + ', ' + skill;
+                }
+            } else {
+                skillsInput.value = skill;
+            }
+        }
+
+        async function completeOnboarding() {
+            if (!formData.preferred_month) {
+                alert('Please select your preferred month');
+                return;
+            }
             
             try {
                 const response = await fetch('/api/onboarding', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(formData)
                 });
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    window.location.href = '/';
+                    // Show success message
+                    document.getElementById('message').innerHTML = '<p style="color: green;">Profile setup completed successfully! Redirecting to dashboard...</p>';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
                 } else {
                     document.getElementById('message').innerHTML = `<p style="color: red;">${result.error}</p>`;
                 }
             } catch (error) {
                 document.getElementById('message').innerHTML = `<p style="color: red;">Setup failed. Please try again.</p>`;
             }
-        });
+        }
+
+        // Initialize
+        updateProgress();
     </script>
 </body>
 </html>
