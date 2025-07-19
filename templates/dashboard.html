@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Learning Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Add Vue.js CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div id="app" class="container">
         <header>
             <h1>Your Personalized Learning Programs</h1>
             <div class="user-info">
@@ -28,7 +30,9 @@
             
             <div class="recommendations-section">
                 <h3>Recommended for You</h3>
-                <div class="recommendations-grid" id="recommendations"></div>
+                <div class="recommendations-grid" id="recommendations">
+                    <!-- Recommendations will be loaded dynamically -->
+                </div>
                 <div class="show-more-container">
                     <button class="show-more-btn" id="showMoreBtn" style="display: none;">Show More</button>
                 </div>
@@ -78,6 +82,15 @@
             }
         }
         
+        function formatRecommendationType(type) {
+            switch(type) {
+                case 'program_similarity': return '🔗 Similar Programs';
+                case 'profile_based': return '🎯 For You';
+                case 'collaborative': return '👥 Popular';
+                default: return '📋 Recommended';
+            }
+        }
+        
         function displayRecommendations() {
             const container = document.getElementById('recommendations');
             const showMoreBtn = document.getElementById('showMoreBtn');
@@ -86,46 +99,64 @@
                 const endIndex = Math.min(displayedCount + ITEMS_PER_PAGE, allRecommendations.length);
                 const itemsToShow = allRecommendations.slice(displayedCount, endIndex);
                 
-                itemsToShow.forEach(item => {
+                itemsToShow.forEach(rec => {
                     const div = document.createElement('div');
                     div.className = 'card';
                     
-                    // Add recommendation type badge
-                    let badgeHtml = '';
-                    let collaborativeInfoHtml = '';
+                    // Create recommendation type badge
+                    let badgeHtml = `<span class="content-badge">${formatRecommendationType(rec.recommendation_type)}</span>`;
                     
-                    if (item.recommendation_type === 'collaborative') {
-                        badgeHtml = '<span class="collab-badge">👥 Collaborative</span>';
-                        if (item.collaborative_info) {
-                            collaborativeInfoHtml = `
-                                <div class="collaborative-info">
-                                    <p><strong>💡 ${item.collaborative_info.message}</strong></p>
-                                    <p><small>${item.collaborative_info.users_registered} users have registered for this program</small></p>
-                                </div>
-                            `;
-                        }
-                    } else if (item.recommendation_type === 'content_based') {
-                        badgeHtml = '<span class="content-badge">🎯 Personalized</span>';
+                    // Create explanation HTML based on recommendation type
+                    let explanationHtml = '';
+                    
+                    if (rec.recommendation_type === 'program_similarity' && rec.similarity_info) {
+                        explanationHtml = `
+                            <div class="similarity-explanation">
+                                <i class="icon-lightbulb">💡</i>
+                                <span class="explanation-text">
+                                    ${rec.similarity_info.explanation}
+                                </span>
+                            </div>
+                        `;
+                    } else if (rec.recommendation_type === 'collaborative' && rec.collaborative_info) {
+                        explanationHtml = `
+                            <div class="collaborative-explanation">
+                                <i class="icon-users">👥</i>
+                                <span class="explanation-text">
+                                    ${rec.collaborative_info.message}
+                                </span>
+                            </div>
+                        `;
+                    } else if (rec.recommendation_type === 'profile_based') {
+                        explanationHtml = `
+                            <div class="profile-explanation">
+                                <i class="icon-user">👤</i>
+                                <span class="explanation-text">
+                                    Based on your profile preferences and interests
+                                </span>
+                            </div>
+                        `;
                     }
                     
                     div.innerHTML = `
                         <div class="card-header">
-                            <h4>${item.title}</h4>
+                            <h4>${rec.title}</h4>
                             ${badgeHtml}
                         </div>
-                        <div class="card-content">
-                            <p><strong>Category:</strong> ${item.category}</p>
-                            <p><strong>Skills:</strong> ${item.skills_required}</p>
-                            <p><strong>Cost:</strong> ₹${item.cost}</p>
-                            <p><strong>Duration:</strong> ${item.start_date} to ${item.end_date}</p>
-                            <p><strong>Match Score:</strong> ${item.score}</p>
-                        </div>
-                        ${collaborativeInfoHtml}
-                        <div class="program-actions">
-                            ${item.is_registered ? 
-                                `<button class="unregister-btn" onclick="unregisterProgram('${item.program_id}')">Unregister</button>` :
-                                `<button class="register-btn" onclick="registerProgram('${item.program_id}', '${item.title}')">I have registered</button>`
-                            }
+                        <div class="card-body">
+                            ${explanationHtml}
+                            <div class="program-details">
+                                <p><strong>Category:</strong> ${rec.category}</p>
+                                <p><strong>Skills:</strong> ${rec.skills_required}</p>
+                                <p><strong>Cost:</strong> $${rec.cost}</p>
+                                <p><strong>Duration:</strong> ${rec.start_date} to ${rec.end_date}</p>
+                            </div>
+                            <div class="card-actions">
+                                ${rec.is_registered ? 
+                                    `<button class="unregister-btn" onclick="unregisterProgram('${rec.program_id}')">Unregister</button>` :
+                                    `<button class="register-btn" onclick="registerProgram('${rec.program_id}', '${rec.title}')">Register Now</button>`
+                                }
+                            </div>
                         </div>
                     `;
                     container.appendChild(div);

@@ -62,8 +62,13 @@ def generate_content_based_recommendations(profile, user_registrations):
     
     # Get list of registered program IDs
     registered_program_ids = {reg['program_id'] for reg in user_registrations}
+    registered_program_list = [reg['program_id'] for reg in user_registrations]
     
-    # Use profile data for recommendations
+    print(f"🎯 Generating recommendations for user with {len(registered_program_ids)} registered programs")
+    
+    all_recommendations = []
+    
+    # Method 1: Profile-based recommendations (existing)
     interest = profile.get('interests', '')
     role = profile.get('role', '')
     skill_level = profile.get('skill_level', '')
@@ -71,57 +76,101 @@ def generate_content_based_recommendations(profile, user_registrations):
     available_month = profile.get('preferred_month', '')
     max_cost = profile.get('max_budget', 0)
     
-    # Convert month name to number for filtering
-    target_month_num = month_to_number(available_month)
-    if not target_month_num:
-        return []
-    
-    # Build Pinecone filters
-    filters = {}
-    if max_cost and max_cost > 0:
-        filters["cost"] = {"$lte": float(max_cost)}
-    
-    # Create composite query
-    full_query = f"{interest}. Role: {role}. Skills to learn: {skills}. Level: {skill_level}. Available in: {available_month}."
-    
-    try:
-        # Get only top 10 from Pinecone
-        results = search_similar_programs(full_query, filters=filters, top_k=10)
+    if interest or role or skills:  # Only if we have profile data
+        target_month_num = month_to_number(available_month)
         
-        # Post-process results
-        recommendations = []
+        # Build Pinecone filters
+        filters = {}
+        if max_cost and max_cost > 0:
+            filters["cost"] = {"$lte": float(max_cost)}
         
-        for match in results:
-            metadata = match.metadata
-            program_id = metadata.get("program_id")
+        # Create composite query
+        full_query = f"{interest}. Role: {role}. Skills to learn: {skills}. Level: {skill_level}. Available in: {available_month}."
+        
+        try:
+            # Get profile-based recommendations
+            profile_results = search_similar_programs(full_query, filters=filters, top_k=8)
             
-            # Skip if user is already registered for this program
-            if program_id in registered_program_ids:
-                continue
+            for match in profile_results:
+                metadata = match.metadata
+                program_id = metadata.get("program_id")
+                
+                # Skip if user is already registered for this program
+                if program_id in registered_program_ids:
+                    continue
+                
+                if match.score > 0.6:
+                    all_recommendations.append({
+                        "program_id": program_id,
+                        "title": metadata.get("title"),
+                        "category": metadata.get("category"),
+                        "skills_required": metadata.get("skills_required"),
+                        "cost": metadata.get("cost"),
+                        "start_date": metadata.get("start_date"),
+                        "end_date": metadata.get("end_date"),
+                        "score": round(match.score, 3),
+                        "recommendation_type": "profile_based",
+                        "recommendation_reason": "Based on your profile preferences"
+                    })
             
-            # Only include high-quality matches (score > 0.7) - removed date filtering
-            if match.score > 0.6:
-                recommendations.append({
-                    "program_id": program_id,
-                    "title": metadata.get("title"),
-                    "category": metadata.get("category"),
-                    "skills_required": metadata.get("skills_required"),
-                    "cost": metadata.get("cost"),
-                    "start_date": metadata.get("start_date"),
-                    "end_date": metadata.get("end_date"),
-                    "score": round(match.score, 3),
-                    "recommendation_type": "content_based"
-                })
-        
-        # Sort by relevance score
-        recommendations.sort(key=lambda x: x["score"], reverse=True)
-        
-        # Return top 3 content-based recommendations (to leave room for collaborative)
-        return recommendations[:3]
+            print(f"✅ Profile-based recommendations: {len([r for r in all_recommendations if r['recommendation_type'] == 'profile_based'])}")
+            
+        except Exception as e:
+            print(f"Error generating profile-based recommendations: {e}")
     
-    except Exception as e:
-        print(f"Error generating content-based recommendations: {e}")
-        return []
+    # Method 2: Program similarity-based recommendations (NEW!)
+    if registered_program_list:
+        try:
+            from pinecone_utils import find_similar_programs_by_registration
+            
+            similar_results = find_similar_programs_by_registration(
+                registered_program_list, 
+                top_k=8, 
+                exclude_ids=registered_program_ids
+            )
+            
+            for match in similar_results:
+                metadata = match.metadata
+                program_id = metadata.get("program_id")
+                
+                # Skip if already in recommendations
+                if any(r['program_id'] == program_id for r in all_recommendations):
+                    continue
+                
+                if match.score > 0.7:  # Higher threshold for similarity-based
+                    similar_to_title = metadata.get('similar_to_program_title', 'your registered program')
+                    
+                    all_recommendations.append({
+                        "program_id": program_id,
+                        "title": metadata.get("title"),
+                        "category": metadata.get("category"),
+                        "skills_required": metadata.get("skills_required"),
+                        "cost": metadata.get("cost"),
+                        "start_date": metadata.get("start_date"),
+                        "end_date": metadata.get("end_date"),
+                        "score": round(match.score, 3),
+                        "recommendation_type": "program_similarity",
+                        "recommendation_reason": f"Similar to '{similar_to_title}'",
+                        "recommendation_explanation": metadata.get('recommendation_explanation', f"Based on your registration for '{similar_to_title}'"),
+                        "similar_to_program": metadata.get('similar_to_program_id'),
+                        "similar_to_program_title": similar_to_title
+                    })
+            
+            print(f"✅ Program similarity recommendations: {len([r for r in all_recommendations if r['recommendation_type'] == 'program_similarity'])}")
+            
+        except Exception as e:
+            print(f"Error generating program similarity recommendations: {e}")
+    
+    # Sort by score and recommendation type priority
+    all_recommendations.sort(key=lambda x: (
+        x['recommendation_type'] != 'program_similarity',  # Prioritize program similarity
+        -x['score']
+    ))
+    
+    print(f"🎯 Total content-based recommendations: {len(all_recommendations)}")
+    
+    # Return top 3 to leave room for collaborative filtering
+    return all_recommendations[:3]
 
 def merge_recommendations(content_based, collaborative, user_registrations):
     """Merge content-based and collaborative recommendations"""
@@ -135,11 +184,28 @@ def merge_recommendations(content_based, collaborative, user_registrations):
     # Process content-based recommendations (already filtered)
     for rec in content_based:
         rec['is_registered'] = False  # Already filtered out
-        rec['collaborative_info'] = None
-    
+        if rec['recommendation_type'] == 'program_similarity':
+            # Enhanced info about which program this is similar to
+            rec['similarity_info'] = {
+                "message": rec.get('recommendation_explanation', 'Similar to your registered programs'),
+                "similar_to_program_id": rec.get('similar_to_program'),
+                "similar_to_program_title": rec.get('similar_to_program_title', 'your registered program'),
+                "explanation": f"Since you registered for '{rec.get('similar_to_program_title', 'a program')}', we think you'd be interested in this similar program."
+            }
+        else:
+            rec['collaborative_info'] = None
+            rec['similarity_info'] = None
+
     print(f"✅ Processed {len(content_based)} content-based recommendations")
     
-    # Process collaborative recommendations and get their full details
+    # Group content-based by type for logging
+    profile_based = [r for r in content_based if r['recommendation_type'] == 'profile_based']
+    similarity_based = [r for r in content_based if r['recommendation_type'] == 'program_similarity']
+    
+    print(f"   📊 Profile-based: {len(profile_based)}")
+    print(f"   🔗 Program similarity: {len(similarity_based)}")
+    
+    # Process collaborative recommendations - FETCH ACTUAL PROGRAM DETAILS
     collaborative_with_details = []
     for collab_rec in collaborative:
         program_id = collab_rec['program_id']
@@ -154,41 +220,69 @@ def merge_recommendations(content_based, collaborative, user_registrations):
             print(f"⚠️  Skipping {collab_rec['program_title']} - already in content-based")
             continue
             
-        # Get program details from Pinecone (or you could store in Supabase)
         try:
-            # For now, create a basic structure - in production, you'd fetch full details
-            collaborative_with_details.append({
-                "program_id": program_id,
-                "title": collab_rec['program_title'],
-                "category": "Collaborative",
-                "skills_required": "Based on similar users",
-                "cost": 0,  # You'd fetch actual cost from your data
-                "start_date": "TBD",
-                "end_date": "TBD",
-                "score": collab_rec['collaborative_score'] / 10,  # Normalize score
-                "recommendation_type": "collaborative",
-                "is_registered": False,  # Already filtered out
-                "collaborative_info": {
-                    "users_registered": get_program_registration_count(program_id),
-                    "message": "Users similar to you have registered for this program"
-                }
-            })
-            print(f"✅ Added collaborative recommendation: {collab_rec['program_title']}")
+            # Fetch actual program details from Pinecone
+            from pinecone_utils import get_program_details
+            program_details = get_program_details(program_id)
+            
+            if program_details:
+                collaborative_with_details.append({
+                    "program_id": program_id,
+                    "title": program_details.get("title", collab_rec['program_title']),
+                    "category": program_details.get("category", "Unknown"),
+                    "skills_required": program_details.get("skills_required", "Based on similar users"),
+                    "cost": program_details.get("cost", 0),
+                    "start_date": program_details.get("start_date", "TBD"),
+                    "end_date": program_details.get("end_date", "TBD"),
+                    "score": collab_rec['collaborative_score'] / 10,
+                    "recommendation_type": "collaborative",
+                    "is_registered": False,
+                    "collaborative_info": {
+                        "users_registered": get_program_registration_count(program_id),
+                        "message": "Users similar to you have registered for this program"
+                    }
+                })
+                print(f"✅ Added collaborative recommendation with details: {program_details.get('title', collab_rec['program_title'])}")
+            else:
+                # Fallback to basic info if details not found
+                collaborative_with_details.append({
+                    "program_id": program_id,
+                    "title": collab_rec['program_title'],
+                    "category": "Collaborative",
+                    "skills_required": "Based on similar users",
+                    "cost": 0,
+                    "start_date": "TBD",
+                    "end_date": "TBD",
+                    "score": collab_rec['collaborative_score'] / 10,
+                    "recommendation_type": "collaborative",
+                    "is_registered": False,
+                    "collaborative_info": {
+                        "users_registered": get_program_registration_count(program_id),
+                        "message": "Users similar to you have registered for this program"
+                    }
+                })
+                print(f"⚠️  Added collaborative recommendation with fallback details: {collab_rec['program_title']}")
+                
         except Exception as e:
             print(f"❌ Error processing collaborative recommendation: {e}")
             continue
     
     print(f"✅ Processed {len(collaborative_with_details)} collaborative recommendations")
     
-    # Combine recommendations
-    all_recommendations = content_based + collaborative_with_details
-    
-    # Sort by score (prioritize content-based with higher scores, then collaborative)
-    all_recommendations.sort(key=lambda x: (x['recommendation_type'] == 'collaborative', -x['score']))
+    # Combine recommendations with priority:
+    # 1. Program similarity (highest priority)
+    # 2. Profile-based 
+    # 3. Collaborative
+    all_recommendations = similarity_based + profile_based + collaborative_with_details
     
     print(f"🎯 FINAL MERGED RECOMMENDATIONS ({len(all_recommendations)} total):")
     for i, rec in enumerate(all_recommendations):
-        print(f"   {i+1}. {rec['title']} ({rec['recommendation_type']}) - Score: {rec['score']}")
+        reason = ""
+        if rec['recommendation_type'] == 'program_similarity':
+            reason = " (similar to registered programs)"
+        elif rec['recommendation_type'] == 'collaborative':
+            reason = " (collaborative filtering)"
+        print(f"   {i+1}. {rec['title']} ({rec['recommendation_type']}) - Score: {rec['score']}{reason}")
     
     # Return only top 5 recommendations
     return all_recommendations[:5]
