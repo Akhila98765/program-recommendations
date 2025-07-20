@@ -5,6 +5,7 @@ from supabase_utils import (
     register_for_program, get_user_registrations, unregister_from_program,
     get_collaborative_recommendations, get_program_registration_count
 )
+from llm_recommendations import llm_engine
 from datetime import datetime
 import calendar
 import jwt
@@ -56,7 +57,7 @@ def is_program_available_in_month(start_date, end_date, target_month_num):
         return True
 
 def generate_content_based_recommendations(profile, user_registrations):
-    """Generate content-based recommendations using vector search"""
+    """Generate ONLY program similarity recommendations (removed profile-based)"""
     if not profile:
         return []
     
@@ -64,78 +65,24 @@ def generate_content_based_recommendations(profile, user_registrations):
     registered_program_ids = {reg['program_id'] for reg in user_registrations}
     registered_program_list = [reg['program_id'] for reg in user_registrations]
     
-    print(f"🎯 Generating recommendations for user with {len(registered_program_ids)} registered programs")
+    print(f"🔗 Generating ONLY similarity recommendations for user with {len(registered_program_ids)} registered programs")
     
     all_recommendations = []
     
-    # Method 1: Profile-based recommendations (existing)
-    interest = profile.get('interests', '')
-    role = profile.get('role', '')
-    skill_level = profile.get('skill_level', '')
-    skills = profile.get('preferred_skills', '')
-    available_month = profile.get('preferred_month', '')
-    max_cost = profile.get('max_budget', 0)
-    
-    if interest or role or skills:  # Only if we have profile data
-        target_month_num = month_to_number(available_month)
-        
-        # Build Pinecone filters
-        filters = {}
-        if max_cost and max_cost > 0:
-            filters["cost"] = {"$lte": float(max_cost)}
-        
-        # Create composite query
-        full_query = f"{interest}. Role: {role}. Skills to learn: {skills}. Level: {skill_level}. Available in: {available_month}."
-        
-        try:
-            # Get profile-based recommendations
-            profile_results = search_similar_programs(full_query, filters=filters, top_k=8)
-            
-            for match in profile_results:
-                metadata = match.metadata
-                program_id = metadata.get("program_id")
-                
-                # Skip if user is already registered for this program
-                if program_id in registered_program_ids:
-                    continue
-                
-                if match.score > 0.6:
-                    all_recommendations.append({
-                        "program_id": program_id,
-                        "title": metadata.get("title"),
-                        "category": metadata.get("category"),
-                        "skills_required": metadata.get("skills_required"),
-                        "cost": metadata.get("cost"),
-                        "start_date": metadata.get("start_date"),
-                        "end_date": metadata.get("end_date"),
-                        "score": round(match.score, 3),
-                        "recommendation_type": "profile_based",
-                        "recommendation_reason": "Based on your profile preferences"
-                    })
-            
-            print(f"✅ Profile-based recommendations: {len([r for r in all_recommendations if r['recommendation_type'] == 'profile_based'])}")
-            
-        except Exception as e:
-            print(f"Error generating profile-based recommendations: {e}")
-    
-    # Method 2: Program similarity-based recommendations (NEW!)
+    # ONLY Method: Program similarity-based recommendations (based on registered programs)
     if registered_program_list:
         try:
             from pinecone_utils import find_similar_programs_by_registration
             
             similar_results = find_similar_programs_by_registration(
                 registered_program_list, 
-                top_k=8, 
+                top_k=10, 
                 exclude_ids=registered_program_ids
             )
             
             for match in similar_results:
                 metadata = match.metadata
                 program_id = metadata.get("program_id")
-                
-                # Skip if already in recommendations
-                if any(r['program_id'] == program_id for r in all_recommendations):
-                    continue
                 
                 if match.score > 0.7:  # Higher threshold for similarity-based
                     similar_to_title = metadata.get('similar_to_program_title', 'your registered program')
@@ -156,20 +103,19 @@ def generate_content_based_recommendations(profile, user_registrations):
                         "similar_to_program_title": similar_to_title
                     })
             
-            print(f"✅ Program similarity recommendations: {len([r for r in all_recommendations if r['recommendation_type'] == 'program_similarity'])}")
+            print(f"✅ Program similarity recommendations: {len(all_recommendations)}")
             
         except Exception as e:
-            print(f"Error generating program similarity recommendations: {e}")
+            print(f"❌ Error generating program similarity recommendations: {e}")
+    else:
+        print("📭 No registered programs found - cannot generate similarity recommendations")
     
-    # Sort by score and recommendation type priority
-    all_recommendations.sort(key=lambda x: (
-        x['recommendation_type'] != 'program_similarity',  # Prioritize program similarity
-        -x['score']
-    ))
+    # Sort by similarity score
+    all_recommendations.sort(key=lambda x: -x['score'])
     
-    print(f"🎯 Total content-based recommendations: {len(all_recommendations)}")
+    print(f"🎯 Total similarity-based recommendations: {len(all_recommendations)}")
     
-    # Return top 3 to leave room for collaborative filtering
+    # Return top 3 similarity recommendations
     return all_recommendations[:3]
 
 def merge_recommendations(content_based, collaborative, user_registrations):
@@ -442,7 +388,7 @@ def update_profile():
 @token_required
 def get_recommendations():
     user_id = session['user_id']
-    print(f"\n🚀 GETTING RECOMMENDATIONS FOR USER: {user_id}")
+    print(f"\n🚀 GETTING COMPREHENSIVE RECOMMENDATIONS FOR USER: {user_id}")
     
     profile = get_user_profile(user_id)
     
@@ -451,29 +397,110 @@ def get_recommendations():
         return jsonify({"error": "Profile not found"}), 404
     
     print(f"✅ User profile loaded: {profile.get('full_name', 'Unknown')}")
+    print(f"   Role: {profile.get('role', 'N/A')}")
+    print(f"   Interests: {profile.get('interests', 'N/A')}")
+    print(f"   Skills: {profile.get('preferred_skills', 'N/A')}")
     
     # Get user registrations FIRST
     print("\n📚 Getting user registrations...")
     user_registrations = get_user_registrations(user_id)
     print(f"✅ User registrations: {len(user_registrations)}")
+    for reg in user_registrations:
+        print(f"   - {reg['program_title']} (ID: {reg['program_id']})")
     
-    # Get content-based recommendations (filtered)
-    print("\n🔍 Getting content-based recommendations...")
-    content_based = generate_content_based_recommendations(profile, user_registrations)
-    print(f"✅ Content-based recommendations: {len(content_based)}")
-    
-    # Get collaborative recommendations - reduced limit
+    # Get collaborative recommendations
     print("\n👥 Getting collaborative recommendations...")
-    collaborative = get_collaborative_recommendations(user_id, limit=5)
+    collaborative = get_collaborative_recommendations(user_id, limit=3)
     print(f"✅ Collaborative recommendations: {len(collaborative)}")
+    for collab in collaborative:
+        print(f"   - {collab['program_title']} (Score: {collab['collaborative_score']})")
     
-    # Merge recommendations
-    print("\n🔄 Merging recommendations...")
-    merged_recommendations = merge_recommendations(content_based, collaborative, user_registrations)
-    print(f"✅ Final recommendations: {len(merged_recommendations)}")
-    
-    # Return only top 5 most apt recommendations
-    return jsonify({"recommendations": merged_recommendations[:5]})
+    # Get hybrid recommendations (LLM + Similarity + Collaborative ONLY)
+    print("\n🔄 Getting hybrid recommendations...")
+    try:
+        hybrid_recommendations = llm_engine.get_hybrid_recommendations(
+            profile, 
+            user_registrations, 
+            collaborative
+        )
+        
+        print(f"✅ Hybrid recommendations: {len(hybrid_recommendations)}")
+        
+        # If we still don't have enough, only add program similarity (NO profile-based)
+        if len(hybrid_recommendations) < 3 and user_registrations:
+            print("\n🔗 Adding more similarity-based recommendations...")
+            similarity_recs = generate_content_based_recommendations(profile, user_registrations)
+            
+            existing_ids = {rec['program_id'] for rec in hybrid_recommendations}
+            for sim_rec in similarity_recs:
+                if sim_rec['program_id'] not in existing_ids and len(hybrid_recommendations) < 5:
+                    formatted_rec = {
+                        "program_id": sim_rec['program_id'],
+                        "title": sim_rec['title'],
+                        "category": sim_rec['category'],
+                        "skills_required": sim_rec.get('skills_required', ''),
+                        "cost": sim_rec.get('cost', 0),
+                        "start_date": sim_rec.get('start_date', ''),
+                        "end_date": sim_rec.get('end_date', ''),
+                        "score": sim_rec.get('score', 0.8),
+                        "recommendation_type": "program_similarity",
+                        "is_registered": False,
+                        "similarity_score": sim_rec.get('score', 0.8),
+                        "similarity_info": {
+                            "message": sim_rec.get('recommendation_explanation', 'Similar to your registered programs'),
+                            "similar_to_program_id": sim_rec.get('similar_to_program'),
+                            "similar_to_program_title": sim_rec.get('similar_to_program_title', 'your registered program'),
+                            "explanation": sim_rec.get('recommendation_explanation', 'Similar to your registered programs')
+                        }
+                    }
+                    hybrid_recommendations.append(formatted_rec)
+                    print(f"   ✅ Added similarity: {sim_rec['title']}")
+        
+        print(f"🎯 Final recommendations: {len(hybrid_recommendations)}")
+        
+        # Verify no profile-based recommendations
+        profile_based_count = len([r for r in hybrid_recommendations if r.get('recommendation_type') == 'profile_based'])
+        if profile_based_count > 0:
+            print(f"⚠️ WARNING: Found {profile_based_count} profile-based recommendations - this should not happen!")
+        
+        return jsonify({"recommendations": hybrid_recommendations})
+        
+    except Exception as e:
+        print(f"❌ Error with hybrid recommendations: {e}")
+        
+        # Even in fallback, only use similarity-based if user has registrations
+        if user_registrations:
+            print("🔄 Fallback: Using similarity-based recommendations only")
+            similarity_recs = generate_content_based_recommendations(profile, user_registrations)
+            return jsonify({"recommendations": similarity_recs})
+        else:
+            print("🔄 Fallback: No registered programs, using basic search")
+            # Basic search based on interests only
+            basic_query = f"{profile.get('interests', '')} {profile.get('role', '')} {profile.get('preferred_skills', '')}"
+            try:
+                from pinecone_utils import search_similar_programs
+                basic_results = search_similar_programs(basic_query, top_k=5)
+                basic_recommendations = []
+                for match in basic_results:
+                    if match.score > 0.6:
+                        metadata = match.metadata
+                        basic_recommendations.append({
+                            "program_id": metadata.get("program_id"),
+                            "title": metadata.get("title"),
+                            "category": metadata.get("category"),
+                            "skills_required": metadata.get("skills_required"),
+                            "cost": metadata.get("cost"),
+                            "start_date": metadata.get("start_date"),
+                            "end_date": metadata.get("end_date"),
+                            "score": round(match.score, 3),
+                            "recommendation_type": "search",
+                            "is_registered": False,
+                            "similarity_score": match.score
+                        })
+                return jsonify({"recommendations": basic_recommendations})
+            except Exception as search_error:
+                print(f"❌ Basic search also failed: {search_error}")
+                return jsonify({"recommendations": []})
 
 @app.route("/api/register-program", methods=["POST"])
 @token_required

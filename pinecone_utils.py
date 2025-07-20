@@ -80,7 +80,7 @@ def find_similar_programs_by_registration(registered_program_ids: list, top_k: i
                 # Find similar programs using this vector
                 similar_response = index.query(
                     vector=program_vector,
-                    top_k=top_k + 5,  # Get extra to account for filtering
+                    top_k=top_k + 5,
                     include_metadata=True
                 )
                 
