@@ -389,7 +389,8 @@ def update_profile():
 def get_recommendations():
     user_id = session['user_id']
     print(f"\n🚀 GETTING COMPREHENSIVE RECOMMENDATIONS FOR USER: {user_id}")
-    
+      
+      
     profile = get_user_profile(user_id)
     
     if not profile:
