@@ -3,355 +3,912 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setup Your Profile</title>
+    <title>Welcome! Let's Set Up Your Profile</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .chat-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .bot .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .user .message-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .bot .message-content {
+            background: white;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        .chat-input-area {
+            background: white;
+            border-radius: 25px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .chat-input-area.active {
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 20px;
+            background: #f8f9fa;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .quick-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .quick-option {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .quick-option:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .progress-indicator {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1);
+            }
+        }
+
+        .skill-level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .skill-level-option {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .skill-level-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .month-option {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .month-option:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .budget-option {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 15px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .budget-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .budget-amount {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .budget-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="onboarding-header">
-            <h1>Complete Your Profile</h1>
-            <p id="stepDescription">Help us personalize your learning recommendations</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="step-indicator">
-                <span id="stepCounter">Step 1 of 6</span>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🤖 Welcome to Your Learning Assistant!</h1>
+            <p>I'm here to help you set up your personalized learning profile. Let's have a quick chat!</p>
+        </div>
+
+        <div class="progress-indicator">
+            <span id="progressText">Let's get started!</span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be added dynamically -->
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
         </div>
-        
-        <div class="onboarding-content">
-            <!-- Step 1: Current Role -->
-            <div class="step-card active" id="step1">
-                <div class="step-icon">👤</div>
-                <h2>What's your current role?</h2>
-                <p>This helps us understand your background and recommend relevant programs.</p>
-                <input type="text" id="role" placeholder="e.g., Quality Engineer, Software Developer, Data Analyst" required>
-                <div class="step-actions">
-                    <button type="button" class="next-btn" onclick="nextStep(1)">Next</button>
-                </div>
-            </div>
 
-            <!-- Step 2: Skill Level -->
-            <div class="step-card" id="step2">
-                <div class="step-icon">📊</div>
-                <h2>What's your skill level?</h2>
-                <p>Choose the level that best describes your overall technical expertise.</p>
-                <div class="skill-level-options">
-                    <div class="skill-option" onclick="selectSkillLevel('Beginner')">
-                        <div class="skill-icon">🌱</div>
-                        <h3>Beginner</h3>
-                        <p>Just starting out or new to the field</p>
-                    </div>
-                    <div class="skill-option" onclick="selectSkillLevel('Intermediate')">
-                        <div class="skill-icon">🌿</div>
-                        <h3>Intermediate</h3>
-                        <p>Some experience and foundational knowledge</p>
-                    </div>
-                    <div class="skill-option" onclick="selectSkillLevel('Advanced')">
-                        <div class="skill-icon">🌳</div>
-                        <h3>Advanced</h3>
-                        <p>Experienced with deep technical knowledge</p>
-                    </div>
-                </div>
-                <div class="step-actions">
-                    <button type="button" class="prev-btn" onclick="prevStep(2)">Previous</button>
-                    <button type="button" class="next-btn" onclick="nextStep(2)" disabled>Next</button>
-                </div>
+        <div class="chat-input-area" id="chatInputArea">
+            <div class="input-group">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type your answer here...">
+                <button class="send-btn" id="sendBtn">➤</button>
             </div>
-
-            <!-- Step 3: Learning Interests -->
-            <div class="step-card" id="step3">
-                <div class="step-icon">🎯</div>
-                <h2>What are your learning interests?</h2>
-                <p>Tell us about the areas you're most excited to explore.</p>
-                <input type="text" id="interests" placeholder="e.g., AI, Cloud Computing, Testing, Data Science" required>
-                <div class="suggestions">
-                    <span class="suggestion-tag" onclick="addToInterests('Artificial Intelligence')">AI</span>
-                    <span class="suggestion-tag" onclick="addToInterests('Cloud Computing')">Cloud</span>
-                    <span class="suggestion-tag" onclick="addToInterests('Testing')">Testing</span>
-                    <span class="suggestion-tag" onclick="addToInterests('Data Science')">Data Science</span>
-                    <span class="suggestion-tag" onclick="addToInterests('Machine Learning')">ML</span>
-                    <span class="suggestion-tag" onclick="addToInterests('DevOps')">DevOps</span>
-                </div>
-                <div class="step-actions">
-                    <button type="button" class="prev-btn" onclick="prevStep(3)">Previous</button>
-                    <button type="button" class="next-btn" onclick="nextStep(3)">Next</button>
-                </div>
-            </div>
-
-            <!-- Step 4: Preferred Skills -->
-            <div class="step-card" id="step4">
-                <div class="step-icon">🛠️</div>
-                <h2>What skills do you want to learn?</h2>
-                <p>List specific skills or technologies you want to master.</p>
-                <input type="text" id="preferredSkills" placeholder="e.g., Python, AWS, Selenium, TensorFlow" required>
-                <div class="suggestions">
-                    <span class="suggestion-tag" onclick="addToSkills('Python')">Python</span>
-                    <span class="suggestion-tag" onclick="addToSkills('AWS')">AWS</span>
-                    <span class="suggestion-tag" onclick="addToSkills('Selenium')">Selenium</span>
-                    <span class="suggestion-tag" onclick="addToSkills('Docker')">Docker</span>
-                    <span class="suggestion-tag" onclick="addToSkills('React')">React</span>
-                    <span class="suggestion-tag" onclick="addToSkills('TensorFlow')">TensorFlow</span>
-                </div>
-                <div class="step-actions">
-                    <button type="button" class="prev-btn" onclick="prevStep(4)">Previous</button>
-                    <button type="button" class="next-btn" onclick="nextStep(4)">Next</button>
-                </div>
-            </div>
-
-            <!-- Step 5: Budget -->
-            <div class="step-card" id="step5">
-                <div class="step-icon">💰</div>
-                <h2>What's your learning budget?</h2>
-                <p>Set a maximum budget for courses and programs.</p>
-                <div class="budget-options">
-                    <div class="budget-option" onclick="selectBudget(5000)">
-                        <div class="budget-amount">₹5,000</div>
-                        <div class="budget-label">Budget-friendly</div>
-                    </div>
-                    <div class="budget-option" onclick="selectBudget(15000)">
-                        <div class="budget-amount">₹15,000</div>
-                        <div class="budget-label">Moderate</div>
-                    </div>
-                    <div class="budget-option" onclick="selectBudget(30000)">
-                        <div class="budget-amount">₹30,000</div>
-                        <div class="budget-label">Premium</div>
-                    </div>
-                    <div class="budget-option custom-budget">
-                        <input type="number" id="customBudget" placeholder="Custom amount" min="0" step="1000" onchange="selectBudget(this.value)">
-                        <div class="budget-label">Custom</div>
-                    </div>
-                </div>
-                <div class="step-actions">
-                    <button type="button" class="prev-btn" onclick="prevStep(5)">Previous</button>
-                    <button type="button" class="next-btn" onclick="nextStep(5)" disabled>Next</button>
-                </div>
-            </div>
-
-            <!-- Step 6: Preferred Month -->
-            <div class="step-card" id="step6">
-                <div class="step-icon">📅</div>
-                <h2>When would you like to start learning?</h2>
-                <p>Choose your preferred month to begin your learning journey.</p>
-                <div class="month-grid">
-                    <div class="month-option" onclick="selectMonth('January')">Jan</div>
-                    <div class="month-option" onclick="selectMonth('February')">Feb</div>
-                    <div class="month-option" onclick="selectMonth('March')">Mar</div>
-                    <div class="month-option" onclick="selectMonth('April')">Apr</div>
-                    <div class="month-option" onclick="selectMonth('May')">May</div>
-                    <div class="month-option" onclick="selectMonth('June')">Jun</div>
-                    <div class="month-option" onclick="selectMonth('July')">Jul</div>
-                    <div class="month-option" onclick="selectMonth('August')">Aug</div>
-                    <div class="month-option" onclick="selectMonth('September')">Sep</div>
-                    <div class="month-option" onclick="selectMonth('October')">Oct</div>
-                    <div class="month-option" onclick="selectMonth('November')">Nov</div>
-                    <div class="month-option" onclick="selectMonth('December')">Dec</div>
-                </div>
-                <div class="step-actions">
-                    <button type="button" class="prev-btn" onclick="prevStep(6)">Previous</button>
-                    <button type="button" class="complete-btn" onclick="completeOnboarding()" disabled>Complete Setup</button>
-                </div>
+            <div class="quick-options" id="quickOptions">
+                <!-- Quick options will be added dynamically -->
             </div>
         </div>
-        
+
         <div id="message"></div>
     </div>
 
     <script>
-        let currentStep = 1;
-        const totalSteps = 6;
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInputArea = document.getElementById('chatInputArea');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const quickOptions = document.getElementById('quickOptions');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const progressText = document.getElementById('progressText');
+
+        let currentStep = 0;
         let formData = {};
-        
-        const stepDescriptions = {
-            1: "Help us understand your professional background",
-            2: "Let's assess your technical expertise level",
-            3: "What excites you most about learning?",
-            4: "Which specific skills would you like to develop?",
-            5: "Set a comfortable budget for your learning journey",
-            6: "When would you like to start your learning adventure?"
+        let isWaitingForInput = false;
+
+        const chatSteps = [
+            {
+                question: "Hi there! 👋 I'm your learning assistant. What's your name?",
+                type: "text",
+                field: "full_name",
+                placeholder: "Enter your full name"
+            },
+            {
+                question: "Nice to meet you, {name}! 😊 What's your current role or job title?",
+                type: "text",
+                field: "role",
+                placeholder: "e.g., Quality Engineer, Software Developer, Student",
+                suggestions: ["Quality Engineer", "Software Developer", "Data Analyst", "Student", "Product Manager", "DevOps Engineer", "UI/UX Designer", "Business Analyst"]
+            },
+            {
+                question: "Great! Now, how would you describe your technical skill level?",
+                type: "skill_level",
+                field: "skill_level",
+                options: [
+                    { value: "Beginner", icon: "🌱", desc: "Just starting out" },
+                    { value: "Intermediate", icon: "🌿", desc: "Some experience" },
+                    { value: "Advanced", icon: "🌳", desc: "Highly experienced" }
+                ]
+            },
+            {
+                question: "What areas are you most excited to learn about? 🎯 (You can select multiple or type your own)",
+                type: "multiple_select",
+                field: "interests",
+                placeholder: "Type additional interests or press Enter to continue",
+                suggestions: [], // Will be populated dynamically
+                allowMultiple: true
+            },
+            {
+                question: "Which specific skills or technologies would you like to master? 🛠️ (Select multiple that interest you)",
+                type: "multiple_select",
+                field: "preferred_skills",
+                placeholder: "Type additional skills or press Enter to continue",
+                suggestions: [], // Will be populated dynamically
+                allowMultiple: true
+            },
+            {
+                question: "What's your budget for learning programs? 💰",
+                type: "budget",
+                field: "max_budget",
+                options: [
+                    { value: 5000, label: "₹5,000", desc: "Budget-friendly" },
+                    { value: 15000, label: "₹15,000", desc: "Moderate" },
+                    { value: 30000, label: "₹30,000", desc: "Premium" },
+                    { value: "custom", label: "Custom", desc: "Enter amount" }
+                ]
+            },
+            {
+                question: "When would you like to start your learning journey? 📅",
+                type: "month",
+                field: "preferred_month",
+                options: ["January", "February", "March", "April", "May", "June", 
+                         "July", "August", "September", "October", "November", "December"]
+            }
+        ];
+
+        // Dynamic suggestions based on role
+        const roleSuggestions = {
+            "Quality Engineer": {
+                interests: ["Testing & QA", "Test Automation", "Performance Testing", "API Testing", "Mobile Testing", "Selenium Testing", "Agile Testing"],
+                skills: ["Selenium", "TestNG", "Cypress", "Postman", "JMeter", "Appium", "TestRail", "JIRA", "Python", "Java"]
+            },
+            "Software Developer": {
+                interests: ["Web Development", "Mobile App Development", "Backend Development", "Frontend Development", "Full Stack Development", "API Development", "Database Design"],
+                skills: ["Python", "JavaScript", "React", "Node.js", "Java", "Spring Boot", "MongoDB", "MySQL", "Git", "Docker"]
+            },
+            "Data Analyst": {
+                interests: ["Data Science", "Business Intelligence", "Data Visualization", "Statistical Analysis", "Machine Learning", "Big Data Analytics", "Predictive Analytics"],
+                skills: ["Python", "R", "SQL", "Tableau", "Power BI", "Excel", "Pandas", "NumPy", "Matplotlib", "Apache Spark"]
+            },
+            "Student": {
+                interests: ["Programming Fundamentals", "Web Development", "Data Science", "Mobile Development", "Artificial Intelligence", "Cybersecurity", "Cloud Computing"],
+                skills: ["Python", "Java", "JavaScript", "HTML/CSS", "Git", "Linux", "SQL", "C++", "React", "AWS"]
+            },
+            "Product Manager": {
+                interests: ["Product Strategy", "User Experience", "Market Research", "Agile Methodologies", "Data Analytics", "Digital Marketing", "Project Management"],
+                skills: ["SQL", "Analytics Tools", "Figma", "JIRA", "Confluence", "Google Analytics", "A/B Testing", "Roadmapping", "Scrum", "Kanban"]
+            },
+            "DevOps Engineer": {
+                interests: ["Cloud Computing", "Infrastructure as Code", "CI/CD Pipelines", "Container Orchestration", "Monitoring & Logging", "Security", "Site Reliability Engineering"],
+                skills: ["AWS", "Docker", "Kubernetes", "Terraform", "Jenkins", "Ansible", "Prometheus", "Grafana", "Linux", "Python"]
+            },
+            "UI/UX Designer": {
+                interests: ["User Experience Design", "User Interface Design", "Design Systems", "Prototyping", "User Research", "Interaction Design", "Visual Design"],
+                skills: ["Figma", "Adobe XD", "Sketch", "Photoshop", "Illustrator", "InVision", "Principle", "Framer", "HTML/CSS", "JavaScript"]
+            },
+            "Business Analyst": {
+                interests: ["Business Process Analysis", "Requirements Gathering", "Data Analysis", "Process Improvement", "Project Management", "Stakeholder Management", "Business Intelligence"],
+                skills: ["SQL", "Excel", "Power BI", "Tableau", "JIRA", "Confluence", "Visio", "Process Modeling", "Agile", "Scrum"]
+            },
+            "default": {
+                interests: ["Artificial Intelligence", "Cloud Computing", "Testing & QA", "Data Science", "Machine Learning", "DevOps", "Cybersecurity", "Web Development"],
+                skills: ["Python", "AWS", "Selenium", "React", "Docker", "TensorFlow", "Java", "Kubernetes", "SQL", "Git"]
+            }
         };
 
+        let selectedItems = []; // Track multiple selections
+
+        function getDynamicSuggestions(field) {
+            const userRole = formData.role || "default";
+            
+            // Find the closest matching role (case-insensitive partial match)
+            let matchedRole = "default";
+            for (const role in roleSuggestions) {
+                if (role.toLowerCase().includes(userRole.toLowerCase()) || 
+                    userRole.toLowerCase().includes(role.toLowerCase())) {
+                    matchedRole = role;
+                    break;
+                }
+            }
+            
+            return roleSuggestions[matchedRole][field] || roleSuggestions["default"][field];
+        }
+
+        function addMessage(content, isBot = true, delay = 0) {
+            setTimeout(() => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isBot ? 'bot' : 'user'}`;
+                
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">${isBot ? '🤖' : '👤'}</div>
+                    <div class="message-content">${content}</div>
+                `;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, delay);
+        }
+
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
         function updateProgress() {
-            const progressFill = document.getElementById('progressFill');
-            const stepCounter = document.getElementById('stepCounter');
-            const stepDescription = document.getElementById('stepDescription');
-            
-            const progressPercent = (currentStep / totalSteps) * 100;
-            progressFill.style.width = progressPercent + '%';
-            stepCounter.textContent = `Step ${currentStep} of ${totalSteps}`;
-            stepDescription.textContent = stepDescriptions[currentStep];
+            const progress = Math.round((currentStep / chatSteps.length) * 100);
+            progressText.textContent = `Progress: ${progress}% (${currentStep}/${chatSteps.length})`;
         }
 
-        function showStep(step) {
-            // Hide all steps
-            document.querySelectorAll('.step-card').forEach(card => {
-                card.classList.remove('active');
-            });
+        function showInputArea(step) {
+            chatInputArea.classList.add('active');
+            quickOptions.innerHTML = '';
+            selectedItems = []; // Reset selections for new question
             
-            // Show current step
-            document.getElementById(`step${step}`).classList.add('active');
-            updateProgress();
-        }
-
-        function nextStep(step) {
-            if (validateStep(step)) {
-                currentStep++;
-                showStep(currentStep);
-            }
-        }
-
-        function prevStep(step) {
-            currentStep--;
-            showStep(currentStep);
-        }
-
-        function validateStep(step) {
-            switch(step) {
-                case 1:
-                    const role = document.getElementById('role').value.trim();
-                    if (!role) {
-                        alert('Please enter your current role');
-                        return false;
-                    }
-                    formData.role = role;
-                    return true;
-                    
-                case 2:
-                    if (!formData.skill_level) {
-                        alert('Please select your skill level');
-                        return false;
-                    }
-                    return true;
-                    
-                case 3:
-                    const interests = document.getElementById('interests').value.trim();
-                    if (!interests) {
-                        alert('Please enter your learning interests');
-                        return false;
-                    }
-                    formData.interests = interests;
-                    return true;
-                    
-                case 4:
-                    const skills = document.getElementById('preferredSkills').value.trim();
-                    if (!skills) {
-                        alert('Please enter skills you want to learn');
-                        return false;
-                    }
-                    formData.preferred_skills = skills;
-                    return true;
-                    
-                case 5:
-                    if (!formData.max_budget) {
-                        alert('Please select your budget');
-                        return false;
-                    }
-                    return true;
-                    
-                default:
-                    return true;
-            }
-        }
-
-        function selectSkillLevel(level) {
-            // Clear previous selections
-            document.querySelectorAll('.skill-option').forEach(option => {
-                option.classList.remove('selected');
-            });
+            const stepData = chatSteps[step];
+            chatInput.placeholder = stepData.placeholder || "Type your answer...";
             
-            // Select current option
-            event.target.closest('.skill-option').classList.add('selected');
-            formData.skill_level = level;
-            
-            // Enable next button
-            document.querySelector('#step2 .next-btn').disabled = false;
-        }
-
-        function selectBudget(amount) {
-            // Clear previous selections
-            document.querySelectorAll('.budget-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Select current option
-            event.target.closest('.budget-option').classList.add('selected');
-            formData.max_budget = parseInt(amount);
-            
-            // Enable next button
-            document.querySelector('#step5 .next-btn').disabled = false;
-        }
-
-        function selectMonth(month) {
-            // Clear previous selections
-            document.querySelectorAll('.month-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Select current option
-            event.target.classList.add('selected');
-            formData.preferred_month = month;
-            
-            // Enable complete button
-            document.querySelector('.complete-btn').disabled = false;
-        }
-
-        function addToInterests(interest) {
-            const interestsInput = document.getElementById('interests');
-            const currentValue = interestsInput.value;
-            
-            if (currentValue) {
-                if (!currentValue.includes(interest)) {
-                    interestsInput.value = currentValue + ', ' + interest;
+            // Update suggestions dynamically for interests and skills
+            if (stepData.type === 'multiple_select') {
+                if (stepData.field === 'interests') {
+                    stepData.suggestions = getDynamicSuggestions('interests');
+                } else if (stepData.field === 'preferred_skills') {
+                    stepData.suggestions = getDynamicSuggestions('skills');
                 }
-            } else {
-                interestsInput.value = interest;
             }
-        }
-
-        function addToSkills(skill) {
-            const skillsInput = document.getElementById('preferredSkills');
-            const currentValue = skillsInput.value;
             
-            if (currentValue) {
-                if (!currentValue.includes(skill)) {
-                    skillsInput.value = currentValue + ', ' + skill;
+            // Add quick options if available
+            if (stepData.suggestions && stepData.type !== 'multiple_select') {
+                stepData.suggestions.forEach(suggestion => {
+                    const option = document.createElement('div');
+                    option.className = 'quick-option';
+                    option.textContent = suggestion;
+                    option.onclick = () => selectQuickOption(suggestion);
+                    quickOptions.appendChild(option);
+                });
+            }
+            
+            // Special handling for different input types
+            if (stepData.type === 'skill_level') {
+                showSkillLevelOptions(stepData.options);
+            } else if (stepData.type === 'budget') {
+                showBudgetOptions(stepData.options);
+            } else if (stepData.type === 'month') {
+                showMonthOptions(stepData.options);
+            } else if (stepData.type === 'multiple_select') {
+                showMultipleSelectOptions(stepData);
+            }
+            
+            chatInput.focus();
+            isWaitingForInput = true;
+        }
+
+        function showSkillLevelOptions(options) {
+            quickOptions.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'skill-level-grid';
+            grid.style.display = 'flex';
+            grid.style.gap = '15px';
+            grid.style.justifyContent = 'center';
+            grid.style.flexWrap = 'wrap';
+            
+            options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'skill-level-option';
+                optionDiv.style.flex = '1';
+                optionDiv.style.minWidth = '150px';
+                optionDiv.style.maxWidth = '200px';
+                optionDiv.innerHTML = `
+                    <div style="font-size: 24px; margin-bottom: 8px;">${option.icon}</div>
+                    <div style="font-weight: bold;">${option.value}</div>
+                    <div style="font-size: 12px; color: #666;">${option.desc}</div>
+                `;
+                optionDiv.onclick = () => selectQuickOption(option.value);
+                grid.appendChild(optionDiv);
+            });
+            
+            quickOptions.appendChild(grid);
+        }
+
+        function showBudgetOptions(options) {
+            quickOptions.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'budget-grid';
+            grid.style.display = 'flex';
+            grid.style.gap = '15px';
+            grid.style.justifyContent = 'center';
+            grid.style.flexWrap = 'wrap';
+            
+            options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'budget-option';
+                optionDiv.style.flex = '1';
+                optionDiv.style.minWidth = '120px';
+                optionDiv.style.maxWidth = '150px';
+                
+                if (option.value === 'custom') {
+                    optionDiv.innerHTML = `
+                        <input type="number" placeholder="Enter amount" style="width: 100%; border: none; background: transparent; text-align: center; margin-bottom: 5px;" 
+                               onchange="selectCustomBudget(this.value)">
+                        <div class="budget-label">${option.desc}</div>
+                    `;
+                } else {
+                    optionDiv.innerHTML = `
+                        <div class="budget-amount">${option.label}</div>
+                        <div class="budget-label">${option.desc}</div>
+                    `;
+                    optionDiv.onclick = () => selectQuickOption(option.value);
                 }
+                
+                grid.appendChild(optionDiv);
+            });
+            
+            quickOptions.appendChild(grid);
+        }
+
+        function showMultipleSelectOptions(stepData) {
+            quickOptions.innerHTML = '';
+            
+            // Create role-based suggestion header
+            const headerDiv = document.createElement('div');
+            headerDiv.style.cssText = `
+                margin-bottom: 15px;
+                padding: 10px;
+                background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+                border-radius: 10px;
+                text-align: center;
+                font-size: 14px;
+                color: #666;
+            `;
+            headerDiv.innerHTML = `
+                <strong>🎯 Recommendations for ${formData.role || 'your role'}:</strong><br>
+                <small>Based on your role, here are some popular ${stepData.field === 'interests' ? 'learning areas' : 'skills'}</small>
+            `;
+            
+            // Create selected items display
+            const selectedDiv = document.createElement('div');
+            selectedDiv.id = 'selectedItems';
+            selectedDiv.style.marginBottom = '15px';
+            selectedDiv.innerHTML = '<div style="font-weight: bold; margin-bottom: 10px;">Selected:</div>';
+            
+            // Create suggestions
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.style.display = 'flex';
+            suggestionsDiv.style.flexWrap = 'wrap';
+            suggestionsDiv.style.gap = '10px';
+            suggestionsDiv.style.marginBottom = '15px';
+            
+            stepData.suggestions.forEach(suggestion => {
+                const option = document.createElement('div');
+                option.className = 'quick-option';
+                option.textContent = suggestion;
+                option.style.cursor = 'pointer';
+                option.onclick = () => toggleSelection(suggestion, option);
+                suggestionsDiv.appendChild(option);
+            });
+            
+            // Create continue button
+            const continueBtn = document.createElement('button');
+            continueBtn.textContent = '✓ Continue with selected items';
+            continueBtn.style.cssText = `
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 25px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: transform 0.2s;
+                margin-top: 10px;
+                width: 100%;
+            `;
+            continueBtn.onmouseover = () => continueBtn.style.transform = 'scale(1.02)';
+            continueBtn.onmouseout = () => continueBtn.style.transform = 'scale(1)';
+            continueBtn.onclick = () => handleMultipleSelection();
+            
+            // Add "Skip" option for completely different interests
+            const skipBtn = document.createElement('button');
+            skipBtn.textContent = '⏭️ Skip - I\'ll type my own';
+            skipBtn.style.cssText = `
+                background: transparent;
+                color: #666;
+                border: 2px solid #ddd;
+                padding: 8px 16px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-size: 12px;
+                margin-top: 5px;
+                transition: all 0.2s;
+            `;
+            skipBtn.onmouseover = () => {
+                skipBtn.style.borderColor = '#667eea';
+                skipBtn.style.color = '#667eea';
+            };
+            skipBtn.onmouseout = () => {
+                skipBtn.style.borderColor = '#ddd';
+                skipBtn.style.color = '#666';
+            };
+            skipBtn.onclick = () => {
+                selectedItems = ['Custom selections'];
+                handleMultipleSelection();
+            };
+            
+            quickOptions.appendChild(headerDiv);
+            quickOptions.appendChild(selectedDiv);
+            quickOptions.appendChild(suggestionsDiv);
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.textAlign = 'center';
+            buttonContainer.appendChild(continueBtn);
+            buttonContainer.appendChild(document.createElement('br'));
+            buttonContainer.appendChild(skipBtn);
+            
+            quickOptions.appendChild(buttonContainer);
+            
+            updateSelectedDisplay();
+        }
+
+        function toggleSelection(item, element) {
+            const index = selectedItems.indexOf(item);
+            if (index > -1) {
+                // Remove if already selected
+                selectedItems.splice(index, 1);
+                element.style.background = 'white';
+                element.style.color = '#667eea';
             } else {
-                skillsInput.value = skill;
+                // Add if not selected
+                selectedItems.push(item);
+                element.style.background = '#667eea';
+                element.style.color = 'white';
+            }
+            updateSelectedDisplay();
+        }
+
+        function updateSelectedDisplay() {
+            const selectedDiv = document.getElementById('selectedItems');
+            if (selectedDiv) {
+                let html = '<div style="font-weight: bold; margin-bottom: 10px;">Selected:</div>';
+                if (selectedItems.length > 0) {
+                    html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+                    selectedItems.forEach(item => {
+                        html += `<span style="background: #e3f2fd; color: #1976d2; padding: 4px 12px; border-radius: 15px; font-size: 12px;">${item}</span>`;
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<span style="color: #999; font-style: italic;">None selected yet</span>';
+                }
+                selectedDiv.innerHTML = html;
             }
         }
 
-        async function completeOnboarding() {
-            if (!formData.preferred_month) {
-                alert('Please select your preferred month');
+        function handleMultipleSelection() {
+            if (selectedItems.length === 0) {
+                alert('Please select at least one item or type a custom answer.');
                 return;
             }
             
-            try {
-                const response = await fetch('/api/onboarding', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(formData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Show success message
-                    document.getElementById('message').innerHTML = '<p style="color: green;">Profile setup completed successfully! Redirecting to dashboard...</p>';
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
+            const selectedText = selectedItems.join(', ');
+            addMessage(selectedText, false);
+            
+            // Store the data
+            const stepData = chatSteps[currentStep];
+            formData[stepData.field] = selectedItems.join(', ');
+            
+            // Clear input and selections
+            chatInput.value = '';
+            chatInputArea.classList.remove('active');
+            isWaitingForInput = false;
+            selectedItems = [];
+            
+            // Move to next step
+            currentStep++;
+            updateProgress();
+            
+            setTimeout(() => {
+                if (currentStep < chatSteps.length) {
+                    askNextQuestion();
                 } else {
-                    document.getElementById('message').innerHTML = `<p style="color: red;">${result.error}</p>`;
+                    completeOnboarding();
                 }
-            } catch (error) {
-                document.getElementById('message').innerHTML = `<p style="color: red;">Setup failed. Please try again.</p>`;
+            }, 500);
+        }
+
+        function askNextQuestion() {
+            showTyping();
+            
+            setTimeout(() => {
+                hideTyping();
+                
+                let question = chatSteps[currentStep].question;
+                
+                // Replace placeholders
+                if (question.includes('{name}') && formData.full_name) {
+                    question = question.replace('{name}', formData.full_name);
+                }
+                
+                addMessage(question);
+                
+                setTimeout(() => {
+                    showInputArea(currentStep);
+                }, 800);
+            }, 1500);
+        }
+
+        async function completeOnboarding() {
+            showTyping();
+            
+            setTimeout(async () => {
+                hideTyping();
+                addMessage("Perfect! 🎉 I have all the information I need. Let me set up your personalized learning profile...");
+                
+                try {
+                    const response = await fetch('/api/onboarding', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        setTimeout(() => {
+                            addMessage("✅ All done! Your profile has been created successfully. I'm now redirecting you to your personalized dashboard where you'll find learning programs tailored just for you!");
+                            
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 3000);
+                        }, 1500);
+                    } else {
+                        addMessage("❌ Oops! Something went wrong while setting up your profile. Please try again.");
+                    }
+                } catch (error) {
+                    addMessage("❌ Sorry, there was an error setting up your profile. Please refresh and try again.");
+                }
+            }, 1500);
+        }
+
+        function selectQuickOption(value) {
+            chatInput.value = value;
+            handleUserInput();
+        }
+
+        function selectCustomBudget(value) {
+            if (value && value > 0) {
+                selectQuickOption(value);
             }
         }
 
-        // Initialize
-        updateProgress();
+        function handleUserInput() {
+            if (!isWaitingForInput) return;
+            
+            const userInput = chatInput.value.trim();
+            const stepData = chatSteps[currentStep];
+            
+            // Handle multiple select differently
+            if (stepData.type === 'multiple_select') {
+                if (userInput) {
+                    // Add custom input to selections
+                    const customItems = userInput.split(',').map(item => item.trim()).filter(item => item);
+                    customItems.forEach(item => {
+                        if (!selectedItems.includes(item)) {
+                            selectedItems.push(item);
+                        }
+                    });
+                    chatInput.value = '';
+                    updateSelectedDisplay();
+                }
+                return; // Don't proceed automatically for multiple select
+            }
+            
+            if (!userInput) return;
+            
+            // Add user message
+            addMessage(userInput, false);
+            
+            // Store the data
+            formData[stepData.field] = stepData.field === 'max_budget' ? parseInt(userInput) : userInput;
+            
+            // Clear input
+            chatInput.value = '';
+            chatInputArea.classList.remove('active');
+            isWaitingForInput = false;
+            
+            // Move to next step
+            currentStep++;
+            updateProgress();
+            
+            setTimeout(() => {
+                if (currentStep < chatSteps.length) {
+                    askNextQuestion();
+                } else {
+                    completeOnboarding();
+                }
+            }, 500);
+        }
+
+        function showMonthOptions(options) {
+            quickOptions.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'month-grid';
+            grid.style.display = 'flex';
+            grid.style.flexWrap = 'wrap';
+            grid.style.gap = '10px';
+            grid.style.justifyContent = 'center';
+            
+            options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'month-option';
+                optionDiv.style.flex = '0 0 calc(25% - 10px)';
+                optionDiv.style.minWidth = '80px';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectQuickOption(option);
+                grid.appendChild(optionDiv);
+            });
+            
+            quickOptions.appendChild(grid);
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', handleUserInput);
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleUserInput();
+            }
+        });
+
+        // Start the conversation
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                addMessage("Welcome! I'm excited to help you find the perfect learning programs. Let's start with a few questions to personalize your experience! 🚀");
+                
+                setTimeout(() => {
+                    askNextQuestion();
+                }, 2000);
+            }, 1000);
+        });
     </script>
 </body>
 </html>
